@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Regalo para HULK!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --hulk-green: #39ff14;
+            --hulk-purple: #4b0082;
+            --hulk-purple-dark: #2a004a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        .font-hulk {
+            font-family: 'Bebas Neue', sans-serif;
+        }
+        
+        .font-arcade {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* Neon Text Effects */
+        .neon-text-green {
+            color: var(--hulk-green);
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.7), 0 0 20px rgba(57, 255, 20, 0.5), 0 0 40px rgba(57, 255, 20, 0.3);
+            letter-spacing: 2px;
+        }
+
+        /* Screen Shake */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-15px, -15px) rotate(-2deg); }
+            20% { transform: translate(-20px, 0px) rotate(2deg); }
+            30% { transform: translate(20px, 15px) rotate(0deg); }
+            40% { transform: translate(15px, -15px) rotate(2deg); }
+            50% { transform: translate(-15px, 15px) rotate(-2deg); }
+            60% { transform: translate(-20px, 5px) rotate(0deg); }
+            70% { transform: translate(20px, 1px) rotate(-2deg); }
+            80% { transform: translate(-10px, -10px) rotate(2deg); }
+            90% { transform: translate(15px, 15px) rotate(0deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+
+        .screen-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* Flash Overlay */
+        #flash-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s ease-out;
+            background: white;
+            z-index: 60;
+        }
+        .flash-active #flash-overlay {
+            opacity: 1;
+            transition: opacity 0.05s ease-in;
+        }
+
+        /* Panel Styling */
+        .panel-card {
+            background-color: rgba(42, 0, 74, 0.6); /* Deep purple */
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 2px solid rgba(75, 0, 130, 0.8);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.9);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .panel-card:hover {
+            border-color: var(--hulk-green);
+            box-shadow: 0 0 25px rgba(57, 255, 20, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.4); border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--hulk-green); border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2bd60f; }
+
+        /* Arcade Canvas Styling */
+        #intro-screen {
+            background-color: #000;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body id="main-body" class="relative">
+
+    <!-- Flash Overlay for Transition -->
+    <div id="flash-overlay" class="fixed inset-0"></div>
+
+    <!-- Intro Animation Screen -->
+    <div id="intro-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-700">
+        <canvas id="gameCanvas"></canvas>
+        <div id="skip-hint" class="absolute bottom-8 font-arcade text-white text-xs sm:text-sm animate-pulse cursor-pointer z-50 opacity-70" onclick="triggerSmashTransition()">
+            TAP TO SKIP
+        </div>
+    </div>
+
+    <!-- Main UI Content -->
+    <main id="main-content" class="min-h-screen py-10 px-4 sm:px-8 opacity-0 scale-95 pointer-events-none transition-all duration-1000 ease-out hidden flex-col items-center justify-center relative z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-black to-black">
+        
+        <header class="text-center mb-10 w-full mt-4">
+            <h2 class="font-hulk text-5xl md:text-7xl text-white tracking-wider mb-2 drop-shadow-[0_5px_5px_rgba(0,0,0,1)]">
+                ¡IMPACTO <span class="neon-text-green">CRÍTICO</span>!
+            </h2>
+            <p class="text-purple-300 max-w-xl mx-auto text-lg font-medium">
+                Has desbloqueado tus regalos secretos.
+            </p>
+        </header>
+
+        <!-- Ancho del contenedor expandido para acomodar tarjetas más grandes -->
+        <div class="w-full max-w-[95%] 2xl:max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 pb-10">
+            
+            <!-- PANEL 1: PLAYLIST -->
+            <div class="panel-card p-6 md:p-8 flex flex-col items-center text-center relative overflow-hidden h-[80vh] min-h-[600px]">
+                <h3 class="font-hulk text-4xl sm:text-5xl text-white mb-2 drop-shadow-md">Tu Playlist (<span class="neon-text-green">YouTube Music</span>)</h3>
+                <p class="text-gray-300 mb-8 text-sm leading-relaxed">
+                    Música para desatar tu fuerza. Escanea el código o tócalo si estás desde tu celular.
+                </p>
+                
+                <a href="https://music.youtube.com/playlist?list=PLexQobMn4ge0&si=IhFrZfHIENwCpVir" target="_blank" class="block bg-black p-3 rounded-xl shadow-2xl border-4 border-[#39ff14] mb-8 transform transition-transform hover:scale-105">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fmusic.youtube.com%2Fplaylist%3Flist%3DPLexQobMn4ge0%26si%3DIhFrZfHIENwCpVir&color=111111&bgcolor=39FF14" 
+                         alt="QR Code Playlist YouTube Music" 
+                         class="w-48 h-48 sm:w-64 sm:h-64 object-contain rounded-lg">
+                </a>
+                
+                <div class="flex-grow"></div> <!-- Spacer to push button to bottom -->
+
+                <a href="https://music.youtube.com/playlist?list=PLexQobMn4ge0&si=IhFrZfHIENwCpVir" target="_blank" class="w-full bg-[#39ff14] hover:bg-[#2bd60f] text-black font-bold py-4 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(57,255,20,0.4)] hover:shadow-[0_0_30px_rgba(57,255,20,0.6)] flex items-center justify-center gap-3 text-lg cursor-pointer">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                    Escuchar ahora
+                </a>
+            </div>
+
+            <!-- PANEL 2: SERIES -->
+            <div class="panel-card p-6 md:p-8 flex flex-col relative overflow-hidden h-[80vh] min-h-[600px]">
+                <div class="flex flex-col items-center lg:items-start text-center lg:text-left mb-6">
+                    <h3 class="font-hulk text-4xl sm:text-5xl text-white mb-2 drop-shadow-md uppercase">Maratón de Series</h3>
+                    <p class="text-gray-300 text-sm">Mis recomendaciones definitivas que TIENES que ver.</p>
+                </div>
+                
+                <div class="flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar flex-grow relative">
+                    <!-- Dynamic Items for Series -->
+                    <script>
+                        const series = [
+                            {title: "The Big Bang Theory", desc: "Risas científicas, cultura pop y una amistad inquebrantable.", img: "bigbang.jpg"},
+                            {title: "This is Us", desc: "Prepara los pañuelos. Una historia hermosa y profundamente emotiva.", img: "thisisus.jpg"},
+                            {title: "Suits", desc: "Abogados brillantes, mucho estilo y drama legal de primer nivel.", img: "suits.jpg"},
+                            {title: "Loki", desc: "El Dios del Engaño desatando el caos absoluto a través del multiverso.", img: "loki.jpg"},
+                            {title: "From", desc: "Un pueblo de pesadilla del que no puedes escapar. Sobrevive a la noche.", img: "from.jpg"},
+                            {title: "Cobra Kai", desc: "Retoma la historia más de 30 años después del torneo de 1984.", img: "cobra.jpg"},
+                            {title: "Ted Lasso", desc: "Un alegre entrenador viaja a Inglaterra para dirigir en la Premier League.", img: "ted.jpg"}
+                        ];
+                        series.forEach(item => {
+                            document.write(`
+                                <div class="flex items-center bg-black/60 p-4 sm:p-5 rounded-xl border border-purple-900 transition-all cursor-default hover:border-[#39ff14] group">
+                                    <img src="${item.img}" alt="${item.title}" onerror="this.src='https://placehold.co/100x140/111/39FF14?text=IMG'" class="w-32 h-44 sm:w-40 sm:h-56 rounded-lg object-cover bg-gray-900 flex-shrink-0 shadow-lg">
+                                    <div class="ml-5 flex-1">
+                                        <h5 class="text-xl sm:text-2xl font-bold text-white leading-tight mb-2 font-hulk tracking-wide group-hover:text-[#39ff14] transition-colors uppercase">${item.title}</h5>
+                                        <p class="text-sm sm:text-base text-gray-300 leading-snug">${item.desc}</p>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    </script>
+                </div>
+            </div>
+
+            <!-- PANEL 3: PELIS -->
+            <div class="panel-card p-6 md:p-8 flex flex-col relative overflow-hidden h-[80vh] min-h-[600px]">
+                <div class="flex flex-col items-center lg:items-start text-center lg:text-left mb-6">
+                    <h3 class="font-hulk text-4xl sm:text-5xl text-white mb-2 drop-shadow-md uppercase">Buenas Pelis</h3>
+                    <p class="text-gray-300 text-sm">Mis recomendaciones definitivas que TIENES que ver.</p>
+                </div>
+                
+                <div class="flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar flex-grow relative">
+                    <!-- Dynamic Items for Movies -->
+                    <script>
+                        const pelis = [
+                            {title: "Thor Ragnarok", desc: "Thor queda atrapado al otro lado del universo sin su martillo, ¿qué hará?.", img: "thor.jpg"},
+                            {title: "Manos Milagrosas", desc: "La inspiradora historia de Ben Carson, un destacado neurocirujano.", img: "Manos.jpg"},
+                            {title: "Como entrenar a tu dragon", desc: "Hipo rompe siglos de tradición al hacerse amigo de Chimuelo.", img: "dragon.jpg"},
+                            {title: "F1", desc: "La película sigue a Sonny Hayes, una exleyenda de la Fórmula 1.", img: "f1.jpg"},
+                            {title: "Eternity", desc: "Las almas en el más allá tienen una semana para decidir dónde pasar la eternidad.", img: "Eter.jpg"}
+                        ];
+                        pelis.forEach(item => {
+                            document.write(`
+                                <div class="flex items-center bg-black/60 p-4 sm:p-5 rounded-xl border border-purple-900 transition-all cursor-default hover:border-[#39ff14] group">
+                                    <img src="${item.img}" alt="${item.title}" onerror="this.src='https://placehold.co/100x140/111/39FF14?text=IMG'" class="w-32 h-44 sm:w-40 sm:h-56 rounded-lg object-cover bg-gray-900 flex-shrink-0 shadow-lg">
+                                    <div class="ml-5 flex-1">
+                                        <h5 class="text-xl sm:text-2xl font-bold text-white leading-tight mb-2 font-hulk tracking-wide group-hover:text-[#39ff14] transition-colors uppercase">${item.title}</h5>
+                                        <p class="text-sm sm:text-base text-gray-300 leading-snug">${item.desc}</p>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    </script>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Transition Logic
+        let hasSmashed = false;
+
+        function triggerSmashTransition() {
+            if (hasSmashed) return;
+            hasSmashed = true;
+
+            const introScreen = document.getElementById('intro-screen');
+            const mainBody = document.getElementById('main-body');
+            const mainContent = document.getElementById('main-content');
+            const flashOverlay = document.getElementById('flash-overlay');
+            const skipHint = document.getElementById('skip-hint');
+            
+            if(skipHint) skipHint.style.display = 'none';
+
+            // Flash & Shake
+            mainBody.classList.add('screen-shake');
+            mainBody.classList.add('flash-active');
+
+            setTimeout(() => {
+                introScreen.style.opacity = '0';
+            }, 100);
+
+            setTimeout(() => {
+                mainBody.classList.remove('flash-active');
+            }, 500);
+
+            // Reveal UI
+            setTimeout(() => {
+                introScreen.style.display = 'none'; 
+                mainContent.classList.remove('hidden');
+                // Force reflow
+                void mainContent.offsetWidth; 
+                mainContent.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                mainContent.classList.add('opacity-100', 'scale-100');
+            }, 800); 
+        }
+
+        // --- ARCADE CANVAS ANIMATION ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        // Low resolution for classic arcade look
+        const GAME_WIDTH = 320;
+        const GAME_HEIGHT = 240;
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        ctx.imageSmoothingEnabled = false;
+
+        // Ground setup
+        const HORIZON_Y = 130; 
+        const STREET_BOTTOM = 240;
+
+        // Visual Palette
+        const PALETTE = {
+            SKIN: '#39ff14',      // Neon Green
+            SKIN_SHADOW: '#22a80c',
+            SKIN_HIGH: '#8aff8a',
+            PANTS: '#4b0082',     // Deep Purple
+            PANTS_SHADOW: '#2a004a',
+            OUTLINE: '#000000',
+            WALL: '#6e3c28',
+            WALL_DARK: '#452113',
+            FLOOR_BASE: '#222222',
+            FLOOR_LIGHT: '#333333'
+        };
+
+        let gameState = 'WALKING'; // WALKING, WINDUP, PUNCH, SHATTERED
+        let stateTimer = 0;
+        let particles = [];
+
+        class Particle {
+            constructor(x, y, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.z = 0; 
+                this.vx = vx;
+                this.vy = vy;
+                this.vz = (Math.random() * 5) + 3; // Upward burst
+                this.w = (Math.random() * 6) + 4;
+                this.h = (Math.random() * 4) + 4;
+                this.color = Math.random() > 0.5 ? PALETTE.WALL : PALETTE.WALL_DARK;
+                this.life = 100;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy; 
+                this.z += this.vz;
+                this.vz -= 0.6; // Gravity
+                
+                if (this.z < 0) {
+                    this.z = 0;
+                    this.vz *= -0.3; // Bounce
+                    this.vx *= 0.6; // Friction
+                }
+                this.life--;
+            }
+            draw(ctx) {
+                if (this.life <= 0) return;
+                let screenY = this.y - this.z;
+                
+                // Shadow
+                ctx.fillStyle = PALETTE.OUTLINE;
+                ctx.fillRect(Math.floor(this.x), Math.floor(this.y), Math.floor(this.w), 2);
+                
+                // Brick
+                ctx.fillStyle = this.color;
+                ctx.fillRect(Math.floor(this.x), Math.floor(screenY), Math.floor(this.w), Math.floor(this.h));
+                // Highlight
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(Math.floor(this.x), Math.floor(screenY), Math.floor(this.w), 1);
+            }
+        }
+
+        class Wall {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.w = 40;
+                this.h = 100;
+                this.depth = 30;
+                this.isBroken = false;
+            }
+            shatter() {
+                this.isBroken = true;
+                for (let i = 0; i < 60; i++) {
+                    let pX = this.x + (Math.random() * this.w);
+                    let pY = this.y + (Math.random() * this.depth);
+                    let pZ = Math.random() * this.h;
+                    let vX = (Math.random() * 8) + 2; // Explode right
+                    let vY = (Math.random() * 4) - 2;
+                    let p = new Particle(pX, pY, vX, vY);
+                    p.z = pZ;
+                    particles.push(p);
+                }
+            }
+            draw(ctx) {
+                if (this.isBroken) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(this.x - 5, this.y, this.w + 10, this.depth + 10);
+                    return;
+                }
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(this.x, this.y, this.w, this.depth);
+                
+                // Front Face
+                ctx.fillStyle = PALETTE.WALL;
+                ctx.fillRect(this.x, this.y - this.h, this.w, this.h);
+                
+                // Brick Lines
+                ctx.fillStyle = PALETTE.WALL_DARK;
+                for(let by = this.y - this.h; by < this.y; by += 8) {
+                    ctx.fillRect(this.x, by, this.w, 1);
+                    for(let bx = this.x; bx < this.x + this.w; bx += 12) {
+                        let offset = (by % 16 === 0) ? 6 : 0;
+                        ctx.fillRect(bx + offset, by, 1, 8);
+                    }
+                }
+                
+                // Depth faces
+                ctx.fillStyle = PALETTE.WALL_DARK;
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.w, this.y - this.h);
+                ctx.lineTo(this.x + this.w + this.depth/2, this.y - this.h - this.depth/2);
+                ctx.lineTo(this.x + this.w + this.depth/2, this.y - this.depth/2);
+                ctx.lineTo(this.x + this.w, this.y);
+                ctx.fill();
+                
+                ctx.fillStyle = '#a65b3d'; // Light top
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.h);
+                ctx.lineTo(this.x + this.depth/2, this.y - this.h - this.depth/2);
+                ctx.lineTo(this.x + this.w + this.depth/2, this.y - this.h - this.depth/2);
+                ctx.lineTo(this.x + this.w, this.y - this.h);
+                ctx.fill();
+            }
+        }
+
+        class Fighter {
+            constructor() {
+                this.x = -40; // Start off screen
+                this.y = 200;
+                this.vx = 2.0; // Walk speed
+                this.frame = 0;
+            }
+            update() {
+                if (gameState === 'WALKING') {
+                    this.x += this.vx;
+                    this.frame += 0.25;
+                } else if (gameState === 'WINDUP' || gameState === 'PUNCH') {
+                    this.frame += 0.3;
+                }
+            }
+            
+            drawBlock(ctx, x, y, w, h, color) {
+                // Draw outline then fill
+                ctx.fillStyle = PALETTE.OUTLINE;
+                ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, w, h);
+            }
+
+            draw(ctx) {
+                ctx.save();
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y, 20, 8, 0, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.translate(Math.floor(this.x), Math.floor(this.y));
+
+                let walkCycle = Math.floor(this.frame) % 4;
+                let bob = (gameState === 'WALKING' && (walkCycle === 1 || walkCycle === 3)) ? -2 : 0;
+                let torsoLean = 0;
+                let punchExt = 0;
+                
+                if (gameState === 'WINDUP') {
+                    torsoLean = -4; bob = 2;
+                } else if (gameState === 'PUNCH' || gameState === 'SHATTERED') {
+                    torsoLean = 8; bob = 2; punchExt = 26;
+                }
+
+                ctx.translate(0, bob);
+
+                // BACK LEG
+                let bLegX = -8, bLegY = -24;
+                if (gameState === 'WALKING') {
+                    if (walkCycle === 1) { bLegX = -14; bLegY = -26; }
+                    if (walkCycle === 3) { bLegX = 0; bLegY = -20; }
+                } else if (gameState === 'WINDUP') { bLegX = -12; }
+                else if (gameState === 'PUNCH' || gameState === 'SHATTERED') { bLegX = -16; }
+                
+                this.drawBlock(ctx, bLegX, bLegY, 12, 24, PALETTE.PANTS_SHADOW);
+                this.drawBlock(ctx, bLegX - 2, bLegY + 20, 16, 6, PALETTE.SKIN_SHADOW);
+
+                // BACK ARM
+                if (gameState === 'WALKING') {
+                    let bArmX = -4;
+                    if (walkCycle === 1) bArmX = 6;
+                    if (walkCycle === 3) bArmX = -12;
+                    this.drawBlock(ctx, bArmX, -55, 12, 22, PALETTE.SKIN_SHADOW);
+                    this.drawBlock(ctx, bArmX + 1, -33, 10, 12, PALETTE.SKIN_SHADOW); 
+                }
+
+                // TORSO
+                ctx.save();
+                ctx.translate(torsoLean, 0);
+                
+                // Waist
+                this.drawBlock(ctx, -14, -34, 26, 12, PALETTE.PANTS);
+                
+                // Chest
+                this.drawBlock(ctx, -18, -62, 34, 28, PALETTE.SKIN);
+                
+                // Chest Details (Abs/Pecs)
+                ctx.fillStyle = PALETTE.SKIN_HIGH;
+                ctx.fillRect(-10, -56, 20, 8); 
+                ctx.fillRect(-4, -46, 10, 10);  
+                
+                // HEAD
+                let headX = -4 + (torsoLean > 0 ? 6 : 0);
+                this.drawBlock(ctx, headX, -80, 18, 20, PALETTE.SKIN);
+                this.drawBlock(ctx, headX + 6, -65, 14, 8, PALETTE.SKIN); // Jaw
+                
+                // Hair & Face
+                ctx.fillStyle = '#000';
+                ctx.fillRect(headX - 1, -81, 20, 6);
+                ctx.fillRect(headX - 1, -78, 6, 8);
+                // Eye
+                ctx.fillRect(headX + 8, -74, 8, 3); // Brow
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(headX + 10, -71, 3, 3); // Eye
+                
+                ctx.restore();
+
+                // FRONT LEG
+                let fLegX = -4, fLegY = -22;
+                if (gameState === 'WALKING') {
+                    if (walkCycle === 1) { fLegX = 4; fLegY = -20; }
+                    if (walkCycle === 3) { fLegX = -12; fLegY = -26; }
+                } else if (gameState === 'WINDUP') { fLegX = 4; }
+                else if (gameState === 'PUNCH' || gameState === 'SHATTERED') { fLegX = 12; }
+
+                this.drawBlock(ctx, fLegX, fLegY, 14, 22, PALETTE.PANTS);
+                ctx.fillStyle = PALETTE.SKIN;
+                ctx.fillRect(fLegX, fLegY + 16, 14, 6); // Torn pants edge
+                this.drawBlock(ctx, fLegX, fLegY + 20, 18, 6, PALETTE.SKIN); // Foot
+
+                // FRONT ARM (SMASH ARM)
+                if (gameState === 'WINDUP') {
+                    this.drawBlock(ctx, -18, -60, 16, 20, PALETTE.SKIN); // Shoulder back
+                    this.drawBlock(ctx, -24, -42, 22, 18, PALETTE.SKIN_HIGH); // Fist cocked back
+                } else if (gameState === 'PUNCH' || gameState === 'SHATTERED') {
+                    this.drawBlock(ctx, -2, -60, 18, 18, PALETTE.SKIN); // Shoulder
+                    this.drawBlock(ctx, 16, -54, punchExt, 14, PALETTE.SKIN); // Arm extension
+                    this.drawBlock(ctx, 16 + punchExt, -60, 24, 24, PALETTE.SKIN_HIGH); // GIANT FIST
+                } else {
+                    let fArmX = -6;
+                    if (walkCycle === 1) fArmX = -12;
+                    if (walkCycle === 3) fArmX = 4;
+                    
+                    this.drawBlock(ctx, fArmX, -60, 16, 24, PALETTE.SKIN); // Upper
+                    this.drawBlock(ctx, fArmX, -36, 14, 20, PALETTE.SKIN); // Lower
+                    this.drawBlock(ctx, fArmX + 1, -16, 18, 16, PALETTE.SKIN_HIGH); // Fist
+                }
+
+                ctx.restore();
+            }
+        }
+
+        let fighter = new Fighter();
+        let wall = new Wall(220, 210);
+
+        function drawBackground(ctx) {
+            // Dark alley sky
+            ctx.fillStyle = '#050011';
+            ctx.fillRect(0, 0, GAME_WIDTH, HORIZON_Y);
+            
+            // Distant buildings
+            ctx.fillStyle = '#110522';
+            for(let i = -10; i < GAME_WIDTH; i += 60) {
+                ctx.fillRect(i, 40, 45, HORIZON_Y - 40);
+                ctx.fillStyle = '#1a0833';
+                ctx.fillRect(i, 40, 5, HORIZON_Y - 40);
+                ctx.fillStyle = '#110522';
+            }
+
+            // Floor
+            ctx.fillStyle = PALETTE.FLOOR_BASE;
+            ctx.fillRect(0, HORIZON_Y, GAME_WIDTH, STREET_BOTTOM - HORIZON_Y);
+
+            // Street lines
+            ctx.fillStyle = PALETTE.FLOOR_LIGHT;
+            for(let y = HORIZON_Y; y < STREET_BOTTOM; y += 15) {
+                let stagger = (y % 30 === 0) ? 0 : 20;
+                for(let x = stagger; x < GAME_WIDTH; x += 40) {
+                    ctx.fillRect(x, y, 1, 15);
+                    if (Math.random() > 0.8) ctx.fillRect(x + 5, y + 2, 6, 2);
+                }
+                ctx.fillStyle = '#111';
+                ctx.fillRect(0, y, GAME_WIDTH, 1);
+                ctx.fillStyle = PALETTE.FLOOR_LIGHT;
+            }
+        }
+
+        function gameLoop() {
+            if(hasSmashed) return; // Stop animation if skipped or finished
+
+            // UPDATE
+            if (gameState === 'WALKING') {
+                fighter.update();
+                if (fighter.x > wall.x - 60) {
+                    gameState = 'WINDUP';
+                    fighter.frame = 0;
+                    stateTimer = 0;
+                }
+            } 
+            else if (gameState === 'WINDUP') {
+                fighter.update();
+                stateTimer++;
+                if (stateTimer > 20) { 
+                    gameState = 'PUNCH';
+                    stateTimer = 0;
+                }
+            }
+            else if (gameState === 'PUNCH') {
+                fighter.update();
+                if (stateTimer === 0) {
+                    wall.shatter();
+                    gameState = 'SHATTERED';
+                    stateTimer = 0;
+                }
+            }
+            else if (gameState === 'SHATTERED') {
+                stateTimer++;
+                if (stateTimer > 40 && !hasSmashed) {
+                    triggerSmashTransition();
+                }
+            }
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+            particles.sort((a, b) => a.y - b.y);
+
+            // DRAW
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            drawBackground(ctx);
+            
+            // Basic Z-Sorting
+            if (fighter.y < wall.y) {
+                fighter.draw(ctx);
+                wall.draw(ctx);
+            } else {
+                wall.draw(ctx);
+                fighter.draw(ctx);
+            }
+
+            particles.forEach(p => p.draw(ctx));
+
+            // Impact Flash logic
+            if (gameState === 'SHATTERED' && stateTimer < 4) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+                
+                // Arcade Hit Star
+                ctx.fillStyle = PALETTE.SKIN;
+                let hx = wall.x; let hy = wall.y - 50;
+                ctx.fillRect(hx-40, hy-4, 80, 8);
+                ctx.fillRect(hx-4, hy-40, 8, 80);
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(hx-20, hy-2, 40, 4);
+                ctx.fillRect(hx-2, hy-20, 4, 40);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Wait a small moment to ensure fonts load, then start
+        window.onload = () => {
+            setTimeout(() => {
+                requestAnimationFrame(gameLoop);
+            }, 100);
+        };
+    </script>
+</body>
+</html>
